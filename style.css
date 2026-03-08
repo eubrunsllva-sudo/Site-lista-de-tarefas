@@ -1,0 +1,99 @@
+/* FUNDO CALMO: Inspirado na imagem enviada */
+body {
+    font-family: 'Segoe UI', sans-serif;
+    background: linear-gradient(135deg, #e0f7fa 0%, #b2ebf2 50%, #81d4fa 100%) no-repeat;
+    background-attachment: fixed;
+    color: #37474f; /* Cinza azulado suave */
+    min-height: 100vh;
+}
+
+.container-principal {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px;
+}
+
+/* Banner e Imagem */
+.welcome-card {
+    max-width: 400px;
+    background: transparent !important;
+    border: none !important;
+    margin-bottom: 15px;
+}
+.welcome-card img {
+    border-radius: 20px !important;
+    box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+}
+
+/* Título Suave */
+.app-title {
+    font-size: 50px;
+    font-weight: 900;
+    background: linear-gradient(90deg, #00acc1, #4dd0e1);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    text-align: center;
+}
+
+/* Cards de Filtro no Topo */
+.card-filtro {
+    background: white;
+    padding: 10px 5px;
+    border-radius: 12px;
+    text-align: center;
+    cursor: pointer;
+    transition: 0.3s;
+    display: flex;
+    flex-direction: column;
+    font-size: 0.75rem;
+    gap: 5px;
+    border: 1px solid #e0f2f1;
+}
+.card-filtro:hover, .card-filtro.active {
+    background: #e0f7fa;
+    transform: translateY(-3px);
+    border-color: #00acc1;
+}
+
+/* Formulário (Light Mode Suave) */
+.planner-card {
+    background: rgba(255, 255, 255, 0.9) !important;
+    border: 1px solid #b2ebf2 !important;
+    border-radius: 18px;
+    width: 100%;
+    max-width: 500px;
+}
+
+.label-calma { color: #546e7a !important; font-weight: 600; }
+
+/* Botão Principal */
+.btn-primary {
+    background-color: #00acc1 !important;
+    border: none !important;
+}
+
+/* Lista de Tarefas */
+#taskList { padding: 0; width: 100%; max-width: 500px; }
+#taskList li {
+    list-style: none;
+    background: white;
+    padding: 18px;
+    margin-bottom: 12px;
+    border-radius: 15px;
+    border-left: 6px solid #00acc1;
+    color: #37474f;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+    animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+#taskList li.done { opacity: 0.5; border-left-color: #cbd5e1; background: #f8fafc; }
+#taskList li.done h5 { text-decoration: line-through; color: #94a3b8; }
+
+.badge-tag { font-size: 0.65rem; padding: 3px 10px; border-radius: 50px; color: white; font-weight: bold; margin-right: 8px; }
+.hidden { display: none !important; }
+
+@keyframes popIn {
+    0% { transform: scale(0.8); opacity: 0; }
+    100% { transform: scale(1); opacity: 1; }
+}
