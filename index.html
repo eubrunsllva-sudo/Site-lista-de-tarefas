@@ -1,98 +1,13 @@
-<!DOCTYPE html>
-<html lang="pt-br">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Focus TDAH - Modo Dual</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
-    <link rel="stylesheet" href="style.css">
-</head>
-<body class="light-mode"> <button id="toggleTheme" class="btn-theme-toggle" onclick="toggleTheme()">
-        <i class="bi bi-moon-stars-fill"></i>
-    </button>
-
-    <div class="container-principal">
-        <div class="card welcome-card">
-            <img src="img2.png" class="card-img-top" alt="Banner Focus">
-        </div>
-
-        <div class="input-section">
-            <h1 class="app-title">Focus</h1>
-
-            <div class="progress mb-4">
-                <div id="progressBar" class="progress-bar progress-bar-striped progress-bar-animated" style="width: 0%"></div>
-            </div>
-
-            <div class="row g-2 mb-4 filtros-container">
-                <div class="col-3">
-                    <div class="card-filtro active" onclick="filterTasks('todas')">
-                        <i class="bi bi-grid-fill"></i><span>Todas</span>
-                    </div>
-                </div>
-                <div class="col-3">
-                    <div class="card-filtro" onclick="filterTasks('Trabalho')">
-                        <i class="bi bi-briefcase text-info"></i><span>Trampo</span>
-                    </div>
-                </div>
-                <div class="col-3">
-                    <div class="card-filtro" onclick="filterTasks('Estudo')">
-                        <i class="bi bi-book text-success"></i><span>Estudo</span>
-                    </div>
-                </div>
-                <div class="col-3">
-                    <div class="card-filtro" onclick="filterTasks('Pessoal')">
-                        <i class="bi bi-heart text-purple"></i><span>Vida</span>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="planner-card card p-4 mb-4">
-                <input id="taskInput" placeholder="O que vamos focar agora?" class="form-control mb-3">
-                
-                <div class="row g-2 mb-3">
-                    <div class="col-6">
-                        <label class="small label-custom">📅 Início</label>
-                        <input type="datetime-local" id="taskStart" class="form-control">
-                    </div>
-                    <div class="col-6">
-                        <label class="small label-custom">🏁 Término</label>
-                        <input type="datetime-local" id="taskEnd" class="form-control">
-                    </div>
-                </div>
-
-                <div class="row g-2 mb-3">
-                    <div class="col-4">
-                        <label class="small label-custom">🧠 Energia</label>
-                        <select id="taskEffort" class="form-select">
-                            <option value="Baixa ☕">Baixa</option>
-                            <option value="Média 💪" selected>Média</option>
-                            <option value="Alta 🔥">Alta</option>
-                        </select>
-                    </div>
-                    <div class="col-4">
-                        <label class="small label-custom">🔄 Repetir</label>
-                        <select id="taskRepeat" class="form-select">
-                            <option value="Não">Não</option>
-                            <option value="Diário">Diário</option>
-                            <option value="Semanal">Semanal</option>
-                            <option value="Mensal">Mensal</option>
-                        </select>
-                    </div>
-                    <div class="col-4">
-                        <label class="small label-custom">🏷️ Tag</label>
-                        <select id="taskTag" class="form-select">
-                            <option value="Trabalho" data-color="#00acc1">Trampo</option>
-                            <option value="Estudo" data-color="#4db6ac">Estudo</option>
-                            <option value="Pessoal" data-color="#9575cd">Vida</option>
-                        </select>
-                    </div>
-                </div>
-                <button onclick="addTask()" class="btn btn-primary w-100 fw-bold">ADICIONAR</button>
-            </div>
-            <ul id="taskList"></ul>
-        </div>
-    </div>
-    <script src="script.js"></script>
-</body>
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>projeto-site</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
 </html>
