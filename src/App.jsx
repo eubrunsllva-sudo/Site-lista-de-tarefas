@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Capacitor } from '@capacitor/core' // Adicionado para detectar o celular
+import { Capacitor } from '@capacitor/core' 
 import './App.css'
 
 function App() {
@@ -7,7 +7,13 @@ function App() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
-  // LÓGICA INTELIGENTE: Pular login se estiver no celular
+  // Estados para novas seleções
+  const [selectedDays, setSelectedDays] = useState([]);
+  const [selectedMonths, setSelectedMonths] = useState([]);
+
+  const diasSemana = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+  const mesesAno = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+
   useEffect(() => {
     const isNative = Capacitor.isNativePlatform();
     if (isNative) {
@@ -70,6 +76,14 @@ function App() {
     }
   };
 
+  const toggleSelection = (item, state, setState) => {
+    if (state.includes(item)) {
+      setState(state.filter(i => i !== item));
+    } else {
+      setState([...state, item]);
+    }
+  };
+
   const handleFocusEscape = (e) => {
     const target = e.currentTarget;
     const padding = 100;
@@ -105,12 +119,19 @@ function App() {
       end: noDeadline ? null : new Date(taskEnd),
       effort: taskEffort,
       repeat: taskRepeat,
-      hourInterval: taskRepeat === 'Hora' ? taskHourInterval : null,
+      // Salva as configurações extras baseadas na repetição
+      repeatConfig: {
+        days: taskRepeat === 'Semanal' ? [...selectedDays] : null,
+        months: taskRepeat === 'Mensal' ? [...selectedMonths] : null,
+        hourInterval: taskRepeat === 'Hora' ? taskHourInterval : null
+      },
       tag: taskTag,
       done: false
     };
     setTasks([...tasks, newTask]);
-    setTaskInput(''); setTaskEnd(''); setTaskHourInterval('00:00'); setNoDeadline(false);
+    // Resetar campos
+    setTaskInput(''); setTaskEnd(''); setTaskHourInterval('00:00'); 
+    setNoDeadline(false); setSelectedDays([]); setSelectedMonths([]);
   };
 
   const toggleDone = (id) => {
@@ -131,7 +152,6 @@ function App() {
         <div className="login-wrapper animate-fade-in">
           <div className="pinterest-card">
             <h2 className="login-welcome">Bem-vindo ao Focus</h2>
-            <p className="login-subtitle">Organize sua rotina agora</p>
             <form onSubmit={handleLogin}>
               <input type="email" className="form-control mb-3" placeholder="E-mail" value={email} onChange={(e) => setEmail(e.target.value)} />
               <input type="password" className="form-control mb-3" placeholder="Senha" value={password} onChange={(e) => setPassword(e.target.value)} />
@@ -151,7 +171,7 @@ function App() {
               <h1 className="app-title" onMouseEnter={handleFocusEscape}>Focus</h1>
             </div>
 
-            <div className="progress mb-4" style={{ width: '100%', maxWidth: '500px', height: '10px', borderRadius: '10px' }}>
+            <div className="progress mb-4">
               <div className="progress-bar progress-bar-striped progress-bar-animated" style={{ width: `${progress}%`, backgroundColor: '#00acc1' }}></div>
             </div>
 
@@ -212,34 +232,41 @@ function App() {
                 </div>
               </div>
 
+              {/* SELEÇÃO HORA */}
               {taskRepeat === 'Hora' && (
                 <div className="mb-3 animate-fade-in">
-                  <label className="small label-custom">⏰ Intervalo (Horas : Minutos)</label>
+                  <label className="small label-custom">⏰ Intervalo (H:M)</label>
                   <div className="d-flex gap-2">
-                    <select 
-                      className="form-select select-scroll"
-                      value={taskHourInterval.split(':')[0] || '00'}
-                      onChange={(e) => {
-                        const mins = taskHourInterval.split(':')[1] || '00';
-                        setTaskHourInterval(`${e.target.value}:${mins}`);
-                      }}
-                    >
-                      {Array.from({ length: 24 }, (_, i) => i.toString().padStart(2, '0')).map(h => (
-                        <option key={h} value={h}>{h} h</option>
-                      ))}
+                    <select className="form-select" value={taskHourInterval.split(':')[0]} onChange={(e) => setTaskHourInterval(`${e.target.value}:${taskHourInterval.split(':')[1]}`)}>
+                      {Array.from({ length: 24 }, (_, i) => i.toString().padStart(2, '0')).map(h => <option key={h} value={h}>{h}h</option>)}
                     </select>
-                    <select 
-                      className="form-select select-scroll"
-                      value={taskHourInterval.split(':')[1] || '00'}
-                      onChange={(e) => {
-                        const hrs = taskHourInterval.split(':')[0] || '00';
-                        setTaskHourInterval(`${hrs}:${e.target.value}`);
-                      }}
-                    >
-                      {Array.from({ length: 60 }, (_, i) => i.toString().padStart(2, '0')).map(m => (
-                        <option key={m} value={m}>{m} m</option>
-                      ))}
+                    <select className="form-select" value={taskHourInterval.split(':')[1]} onChange={(e) => setTaskHourInterval(`${taskHourInterval.split(':')[0]}:${e.target.value}`)}>
+                      {Array.from({ length: 60 }, (_, i) => i.toString().padStart(2, '0')).map(m => <option key={m} value={m}>{m}m</option>)}
                     </select>
+                  </div>
+                </div>
+              )}
+
+              {/* SELEÇÃO SEMANAL */}
+              {taskRepeat === 'Semanal' && (
+                <div className="mb-3 animate-fade-in">
+                  <label className="small label-custom">📅 Dias da Semana</label>
+                  <div className="d-flex flex-wrap gap-1">
+                    {diasSemana.map(dia => (
+                      <button key={dia} type="button" className={`btn btn-sm ${selectedDays.includes(dia) ? 'btn-primary' : 'btn-outline-secondary'}`} style={{ fontSize: '0.65rem' }} onClick={() => toggleSelection(dia, selectedDays, setSelectedDays)}>{dia}</button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* SELEÇÃO MENSAL */}
+              {taskRepeat === 'Mensal' && (
+                <div className="mb-3 animate-fade-in">
+                  <label className="small label-custom">🗓️ Meses</label>
+                  <div className="d-flex flex-wrap gap-1">
+                    {mesesAno.map(mes => (
+                      <button key={mes} type="button" className={`btn btn-sm ${selectedMonths.includes(mes) ? 'btn-primary' : 'btn-outline-secondary'}`} style={{ fontSize: '0.65rem' }} onClick={() => toggleSelection(mes, selectedMonths, setSelectedMonths)}>{mes}</button>
+                    ))}
                   </div>
                 </div>
               )}
@@ -250,11 +277,21 @@ function App() {
             <ul id="taskList">
               {tasks.filter(t => filter === 'todas' || t.tag === filter).map(t => (
                 <li key={t.id} className={t.done ? 'done' : ''} onClick={() => toggleDone(t.id)}>
-                  <div className="d-flex justify-content-between align-items-start">
+                  <div className="d-flex justify-content-between align-items-start w-100">
                     <div>
                       <span className="badge" style={{ backgroundColor: t.tag === 'Trabalho' ? '#00acc1' : t.tag === 'Estudo' ? '#4db6ac' : '#9575cd', fontSize: '0.6rem' }}>{t.tag}</span>
                       <small className="ms-2 opacity-75">{t.effort}</small>
                       <h5 className="mt-2 mb-0"><strong>{t.text}</strong></h5>
+                      
+                      {/* Resumo da Repetição na lista */}
+                      {t.repeat !== 'Não' && (
+                        <div className="mt-1" style={{ fontSize: '0.65rem', color: '#666' }}>
+                          🔄 {t.repeat} 
+                          {t.repeatConfig?.days && ` (${t.repeatConfig.days.join(', ')})`}
+                          {t.repeatConfig?.months && ` (${t.repeatConfig.months.join(', ')})`}
+                          {t.repeatConfig?.hourInterval && ` [${t.repeatConfig.hourInterval}]`}
+                        </div>
+                      )}
                     </div>
                     <button className="btn btn-sm text-danger" onClick={(e) => { e.stopPropagation(); removeTask(t.id); }}>🗑️</button>
                   </div>
@@ -262,7 +299,6 @@ function App() {
               ))}
             </ul>
             
-            {/* Opcional: Ocultar o botão "Sair" se estiver no celular para evitar que o usuário volte para a tela de login vazia */}
             {!Capacitor.isNativePlatform() && (
               <button className="btn btn-sm btn-outline-secondary mt-4 mb-5" onClick={() => setIsLoggedIn(false)} style={{ borderRadius: '20px', fontSize: '0.7rem' }}>Sair da conta</button>
             )}
