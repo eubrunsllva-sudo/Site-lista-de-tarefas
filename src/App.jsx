@@ -1,10 +1,19 @@
 import { useState, useEffect } from 'react'
+import { Capacitor } from '@capacitor/core' // Adicionado para detectar o celular
 import './App.css'
 
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+
+  // LÓGICA INTELIGENTE: Pular login se estiver no celular
+  useEffect(() => {
+    const isNative = Capacitor.isNativePlatform();
+    if (isNative) {
+      setIsLoggedIn(true);
+    }
+  }, []);
 
   const [tasks, setTasks] = useState(() => {
     const savedTasks = localStorage.getItem('focus_tasks');
@@ -115,7 +124,7 @@ function App() {
   return (
     <div className="container-principal">
       <button className="btn-theme-toggle-cat" onClick={() => setIsDarkMode(!isDarkMode)}>
-        <img src={isDarkMode ? "/cat-open.png" : "/cat-shy.png"} alt="Tema" className="cat-theme-icon" />
+        <img src={isDarkMode ? "cat-open.png" : "cat-shy.png"} alt="Tema" className="cat-theme-icon" />
       </button>
 
       {!isLoggedIn ? (
@@ -133,7 +142,7 @@ function App() {
       ) : (
         <>
           <div className="card welcome-card">
-            <img src={isDarkMode ? "/img2.png" : "/img1.png"} className="card-img-top" alt="Banner" />
+            <img src={isDarkMode ? "img2.png" : "img1.png"} className="card-img-top" alt="Banner" />
           </div>
 
           <div className="input-section">
@@ -253,7 +262,10 @@ function App() {
               ))}
             </ul>
             
-            <button className="btn btn-sm btn-outline-secondary mt-4 mb-5" onClick={() => setIsLoggedIn(false)} style={{ borderRadius: '20px', fontSize: '0.7rem' }}>Sair da conta</button>
+            {/* Opcional: Ocultar o botão "Sair" se estiver no celular para evitar que o usuário volte para a tela de login vazia */}
+            {!Capacitor.isNativePlatform() && (
+              <button className="btn btn-sm btn-outline-secondary mt-4 mb-5" onClick={() => setIsLoggedIn(false)} style={{ borderRadius: '20px', fontSize: '0.7rem' }}>Sair da conta</button>
+            )}
           </div>
         </>
       )}
