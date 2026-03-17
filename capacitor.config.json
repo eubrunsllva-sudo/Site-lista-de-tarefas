@@ -1,5 +1,19 @@
 {
   "appId": "io.github.eubrunsllva_sudo.focusplanner",
   "appName": "Focus",
-  "webDir": "dist"
+  "webDir": "dist",
+  "bundledWebRuntime": false,
+  "plugins": {
+    "GoogleAuth": {
+      "scopes": [
+        "profile",
+        "email",
+        "https://www.googleapis.com/auth/drive.appdata",
+        "https://www.googleapis.com/auth/drive.file"
+      ],
+      "serverClientId": "217686217989-vb0q07jubj16crcjmi1ruknkbfg7cl3m.apps.googleusercontent.com",
+      "androidClientId": "217686217989-vb0q07jubj16crcjmi1ruknkbfg7cl3m.apps.googleusercontent.com",
+      "forceCodeForRefreshToken": true
+    }
+  }
 }

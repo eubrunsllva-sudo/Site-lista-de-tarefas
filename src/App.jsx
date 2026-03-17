@@ -1,13 +1,15 @@
 import { useState, useEffect } from 'react'
 import { Capacitor } from '@capacitor/core' 
+// Importação do Plugin de Autenticação
+import { GoogleAuth } from '@codetrix-studio/capacitor-google-auth'
 import './App.css'
 
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-
-  // Estados para novas seleções
+  
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [selectedDays, setSelectedDays] = useState([]);
   const [selectedMonths, setSelectedMonths] = useState([]);
 
@@ -18,16 +20,22 @@ function App() {
     const isNative = Capacitor.isNativePlatform();
     if (isNative) {
       setIsLoggedIn(true);
+      // Inicializa o Google Auth no Mobile
+      GoogleAuth.initialize();
     }
   }, []);
 
   const [tasks, setTasks] = useState(() => {
     const savedTasks = localStorage.getItem('focus_tasks');
     if (savedTasks) {
-      return JSON.parse(savedTasks).map(t => ({
-        ...t,
-        end: t.end ? new Date(t.end) : null
-      }));
+      try {
+        return JSON.parse(savedTasks).map(t => ({
+          ...t,
+          end: t.end ? new Date(t.end) : null
+        }));
+      } catch (e) {
+        return [];
+      }
     }
     return [];
   });
@@ -93,7 +101,7 @@ function App() {
     target.style.position = 'fixed';
     target.style.left = `${newX}px`;
     target.style.top = `${newY}px`;
-    target.style.zIndex = '3000';
+    target.style.zIndex = '100'; 
     target.style.transform = 'translate(-50%, -50%)';
   };
 
@@ -104,6 +112,7 @@ function App() {
       title.style.left = '0';
       title.style.top = '0';
       title.style.transform = 'none';
+      title.style.zIndex = '10';
     }
   };
 
@@ -119,7 +128,6 @@ function App() {
       end: noDeadline ? null : new Date(taskEnd),
       effort: taskEffort,
       repeat: taskRepeat,
-      // Salva as configurações extras baseadas na repetição
       repeatConfig: {
         days: taskRepeat === 'Semanal' ? [...selectedDays] : null,
         months: taskRepeat === 'Mensal' ? [...selectedMonths] : null,
@@ -129,7 +137,6 @@ function App() {
       done: false
     };
     setTasks([...tasks, newTask]);
-    // Resetar campos
     setTaskInput(''); setTaskEnd(''); setTaskHourInterval('00:00'); 
     setNoDeadline(false); setSelectedDays([]); setSelectedMonths([]);
   };
@@ -142,8 +149,88 @@ function App() {
     setTasks(tasks.filter(t => t.id !== id));
   };
 
+  // --- NOVAS FUNÇÕES DE DRIVE ---
+
+  const handleImportDrive = async () => {
+    try {
+      const user = await GoogleAuth.signIn();
+      console.log('Usuário para importação:', user);
+      alert(`Conectado como ${user.email}. Buscando backup...`);
+      // A lógica de busca de arquivo exige chamadas REST à API do Drive
+      setIsMenuOpen(false);
+    } catch (error) {
+      console.error(error);
+      alert('Erro na importação: ' + (error.message || 'Verifique as configurações do Google Cloud'));
+    }
+  };
+
+  const handleExportDrive = async () => {
+    try {
+      // 1. Tenta autenticar
+      const user = await GoogleAuth.signIn();
+      
+      // 2. Prepara os dados
+      const backupData = {
+        date: new Date().toISOString(),
+        tasks: tasks
+      };
+
+      console.log('Dados prontos para exportar:', backupData);
+      
+      // 3. Feedback visual (O upload real requer um token e POST para a Drive API)
+      alert(`Sucesso no login, ${user.givenName}! Agora o app pode enviar seus dados para o Drive.`);
+      
+      setIsMenuOpen(false);
+    } catch (error) {
+      console.error(error);
+      alert('Falha na conexão: ' + (error.message || 'Erro de autenticação'));
+    }
+  };
+
   return (
     <div className="container-principal">
+      
+      {isLoggedIn && (
+        <>
+          <button 
+            className="hamburger-menu" 
+            style={{ zIndex: 11000, position: 'fixed' }}
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              setIsMenuOpen(!isMenuOpen);
+            }}
+          >
+            <div className="bar"></div>
+            <div className="bar"></div>
+            <div className="bar"></div>
+          </button>
+
+          {isMenuOpen && (
+            <div 
+              className="menu-overlay" 
+              style={{ zIndex: 10500 }} 
+              onClick={() => setIsMenuOpen(false)}
+            ></div>
+          )}
+
+          <div className={`sidebar ${isMenuOpen ? 'open' : ''}`} style={{ zIndex: 12000 }}>
+            <div className="sidebar-header">
+              <h3>Configurações</h3>
+              <button className="close-btn" onClick={() => setIsMenuOpen(false)}>&times;</button>
+            </div>
+            <div className="sidebar-content">
+              <button className="menu-item" onClick={handleImportDrive}>
+                <i className="bi bi-cloud-download me-2"></i> Importar do Drive
+              </button>
+              <button className="menu-item" onClick={handleExportDrive}>
+                <i className="bi bi-cloud-upload me-2"></i> Exportar para o Drive
+              </button>
+            </div>
+          </div>
+        </>
+      )}
+
       <button className="btn-theme-toggle-cat" onClick={() => setIsDarkMode(!isDarkMode)}>
         <img src={isDarkMode ? "cat-open.png" : "cat-shy.png"} alt="Tema" className="cat-theme-icon" />
       </button>
@@ -232,7 +319,6 @@ function App() {
                 </div>
               </div>
 
-              {/* SELEÇÃO HORA */}
               {taskRepeat === 'Hora' && (
                 <div className="mb-3 animate-fade-in">
                   <label className="small label-custom">⏰ Intervalo (H:M)</label>
@@ -247,7 +333,6 @@ function App() {
                 </div>
               )}
 
-              {/* SELEÇÃO SEMANAL */}
               {taskRepeat === 'Semanal' && (
                 <div className="mb-3 animate-fade-in">
                   <label className="small label-custom">📅 Dias da Semana</label>
@@ -259,7 +344,6 @@ function App() {
                 </div>
               )}
 
-              {/* SELEÇÃO MENSAL */}
               {taskRepeat === 'Mensal' && (
                 <div className="mb-3 animate-fade-in">
                   <label className="small label-custom">🗓️ Meses</label>
@@ -282,8 +366,6 @@ function App() {
                       <span className="badge" style={{ backgroundColor: t.tag === 'Trabalho' ? '#00acc1' : t.tag === 'Estudo' ? '#4db6ac' : '#9575cd', fontSize: '0.6rem' }}>{t.tag}</span>
                       <small className="ms-2 opacity-75">{t.effort}</small>
                       <h5 className="mt-2 mb-0"><strong>{t.text}</strong></h5>
-                      
-                      {/* Resumo da Repetição na lista */}
                       {t.repeat !== 'Não' && (
                         <div className="mt-1" style={{ fontSize: '0.65rem', color: '#666' }}>
                           🔄 {t.repeat} 
@@ -309,4 +391,4 @@ function App() {
   )
 }
 
-export default App
+export default App;

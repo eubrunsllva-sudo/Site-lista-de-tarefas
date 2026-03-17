@@ -4,4 +4,5 @@
     <string name="title_activity_main">Focus</string>
     <string name="package_name">io.github.eubrunsllva_sudo.focusplanner</string>
     <string name="custom_url_scheme">io.github.eubrunsllva_sudo.focusplanner</string>
+    <string name="server_client_id">217686217989-vb0q07jubj16crcjmi1ruknkbfg7cl3m.apps.googleusercontent.com</string>
 </resources>
