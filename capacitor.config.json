@@ -3,6 +3,11 @@
   "appName": "Focus",
   "webDir": "dist",
   "bundledWebRuntime": false,
+
+  "server": {
+    "androidScheme": "https"
+  },
+
   "plugins": {
     "GoogleAuth": {
       "scopes": [
@@ -11,9 +16,18 @@
         "https://www.googleapis.com/auth/drive.appdata",
         "https://www.googleapis.com/auth/drive.file"
       ],
+
       "serverClientId": "217686217989-vb0q07jubj16crcjmi1ruknkbfg7cl3m.apps.googleusercontent.com",
+
       "androidClientId": "217686217989-vb0q07jubj16crcjmi1ruknkbfg7cl3m.apps.googleusercontent.com",
-      "forceCodeForRefreshToken": true
+
+      "webClientId": "217686217989-vb0q07jubj16crcjmi1ruknkbfg7cl3m.apps.googleusercontent.com",
+
+      "forceCodeForRefreshToken": true,
+
+      "handleResultOnNewIntent": true,
+
+      "loggingBehavior": "debug"
     }
   }
 }

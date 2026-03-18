@@ -13,6 +13,7 @@ body {
     min-height: 100vh;
     transition: background 0.3s ease;
     margin: 0;
+    overflow-x: hidden;
 }
 
 .container-principal {
@@ -24,6 +25,16 @@ body {
     min-height: 100vh;
 }
 
+/* Ajuste para o conteúdo não ficar colado no topo */
+.app-content {
+    width: 100%;
+    max-width: 500px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-top: 20px;
+}
+
 /* ============================================================
    TÍTULO FOCUS (Efeito de Movimento)
    ============================================================ */
@@ -33,7 +44,7 @@ body {
     justify-content: center;
     align-items: center;
     width: 100%;
-    height: 100px; 
+    height: 120px; 
     margin: 10px 0;
 }
 
@@ -54,23 +65,23 @@ body {
     margin: 0 !important;
     display: inline-block;
     cursor: pointer;
-    background: linear-gradient(135deg, #a5f3fc 0%, #7dd3fc 50%, #93c5fd 100%) !important;
+    background: linear-gradient(135deg, #00acc1 0%, #7dd3fc 50%, #93c5fd 100%) !important;
     -webkit-background-clip: text !important;
     background-clip: text !important;
     -webkit-text-fill-color: transparent !important;
     position: relative; 
-    z-index: 100; /* Reduzido para não tapar o menu */
+    z-index: 10;
     transition: all 0.7s cubic-bezier(0.18, 0.89, 0.32, 1.28);
 }
 
 /* ============================================================
-   BOTÃO HAMBÚRGUER E MENU LATERAL (CORRIGIDO)
+   MENU LATERAL E HAMBÚRGUER
    ============================================================ */
 .hamburger-menu {
     position: fixed;
     top: 20px;
     left: 20px;
-    z-index: 11000 !important; /* Valor alto para garantir clique */
+    z-index: 11000 !important;
     background: white;
     border: 1px solid #e0f2f1;
     padding: 12px;
@@ -92,35 +103,26 @@ body {
 .sidebar {
     position: fixed;
     top: 0;
-    left: -285px;
+    left: -300px;
     width: 280px;
     height: 100%;
     background-color: white;
     z-index: 12000; 
-    transition: all 0.4s cubic-bezier(0.18, 0.89, 0.32, 1.28);
+    transition: all 0.4s ease;
     box-shadow: 4px 0 25px rgba(0,0,0,0.15);
     padding: 25px;
-    display: flex;
-    flex-direction: column;
 }
 
 .sidebar.open {
     left: 0;
 }
 
-.sidebar-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 30px;
-}
-
-.close-btn {
-    background: none;
-    border: none;
-    font-size: 2rem;
-    cursor: pointer;
-    color: #666;
+.menu-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(2px);
+    z-index: 10500;
 }
 
 .menu-item {
@@ -131,105 +133,72 @@ body {
     background: #f8fafc;
     border-radius: 10px;
     text-align: left;
-    transition: 0.2s;
-}
-
-.menu-item:hover {
-    background: #e0f7fa;
-}
-
-.menu-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
-    background: rgba(0, 0, 0, 0.4);
-    backdrop-filter: blur(2px);
-    z-index: 10500; /* Entre o botão e o conteúdo */
+    font-weight: 600;
 }
 
 /* ============================================================
-   COMPONENTES DO PLANNER
+   FILTROS E PROGRESSO
    ============================================================ */
-.input-section {
-    width: 100%;
-    max-width: 500px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-}
-
 .filtros-container {
     display: flex;
-    gap: 10px;
+    gap: 8px;
     justify-content: center;
     flex-wrap: wrap;
-    width: 100%;
+    margin-bottom: 20px;
 }
 
 .card-filtro {
     background: white;
-    padding: 8px 18px;
-    border-radius: 25px;
-    text-align: center;
+    padding: 6px 15px;
+    border-radius: 20px;
     cursor: pointer;
     transition: 0.3s;
-    font-size: 0.85rem;
+    font-size: 0.8rem;
     font-weight: 600;
     border: 1px solid #e0f2f1;
 }
 
 .card-filtro.active {
-    background: #e0f7fa;
+    background: #00acc1;
+    color: white;
     border-color: #00acc1;
-    color: #00acc1;
 }
 
-.planner-card {
-    background: rgba(255, 255, 255, 0.9) !important;
-    border: 1px solid #b2ebf2 !important;
-    border-radius: 18px;
+.progress {
     width: 100%;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.05);
-}
-
-.label-custom {
-    color: #546e7a;
-    font-weight: 600;
-    margin-bottom: 4px;
-    display: block;
+    height: 10px;
+    border-radius: 10px;
+    background-color: rgba(255,255,255,0.5);
 }
 
 /* ============================================================
-   ESTILOS DE LISTA E TAREFAS
+   TAREFAS (LISTA)
    ============================================================ */
 #taskList {
     padding: 0;
     width: 100%;
-    margin-top: 20px;
 }
 
 #taskList li {
     list-style: none;
     background: white;
-    padding: 18px;
-    margin-bottom: 12px;
-    border-radius: 15px;
+    padding: 15px;
+    margin-bottom: 10px;
+    border-radius: 12px;
     border-left: 6px solid #00acc1;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
     cursor: pointer;
-    transition: transform 0.2s;
-}
-
-#taskList li:active {
-    transform: scale(0.98);
+    transition: 0.2s;
 }
 
 #taskList li.done {
-    opacity: 0.5;
-    text-decoration: line-through;
+    opacity: 0.6;
     border-left-color: #90a4ae;
+}
+
+#taskList li.done h5 {
+    text-decoration: line-through;
+    color: #90a4ae;
 }
 
 /* ============================================================
@@ -240,35 +209,15 @@ body.dark-mode {
     color: #f1f5f9;
 }
 
-body.dark-mode .hamburger-menu {
-    background: #1e293b;
-    border-color: #334155;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-}
-
-body.dark-mode .bar { background-color: #f1f5f9; }
-
-body.dark-mode .sidebar {
-    background-color: #0f172a;
-    color: white;
-}
-
+body.dark-mode .hamburger-menu, 
+body.dark-mode .sidebar,
 body.dark-mode .planner-card, 
 body.dark-mode .card-filtro,
-body.dark-mode #taskList li {
+body.dark-mode #taskList li,
+body.dark-mode .pinterest-card {
     background-color: #1e293b !important;
     color: #f1f5f9 !important;
     border-color: #334155 !important;
-}
-
-body.dark-mode .menu-item {
-    background: #1e293b;
-    border-color: #334155;
-    color: white;
-}
-
-body.dark-mode .menu-item:hover {
-    background: #334155;
 }
 
 body.dark-mode .form-control,
@@ -278,53 +227,25 @@ body.dark-mode .form-select {
     color: white;
 }
 
-body.dark-mode .label-custom {
-    color: #94a3b8;
-}
-
 /* ============================================================
-   OUTROS ELEMENTOS (Gatinho e Login)
+   BOTÃO GATO E LOGIN
    ============================================================ */
 .btn-theme-toggle-cat {
     position: fixed;
     top: 15px;
     right: 15px;
-    z-index: 4000;
+    z-index: 13000;
     border: none;
     background: transparent !important;
-    width: 80px; 
-    height: 80px;
+    width: 70px; 
+    height: 70px;
     cursor: pointer;
+    transition: transform 0.3s;
 }
 
+.btn-theme-toggle-cat:hover { transform: scale(1.1); }
 .cat-theme-icon { width: 100%; height: 100%; object-fit: contain; }
 
-.login-wrapper {
-    width: 100%;
-    max-width: 400px;
-    margin-top: 50px;
-}
-
-.pinterest-card {
-    background: white;
-    padding: 40px;
-    border-radius: 32px;
-    text-align: center;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-}
-
-body.dark-mode .pinterest-card {
-    background: #1e293b;
-    color: white;
-}
-
-.btn-pinterest {
-    background-color: #e60023;
-    color: white;
-    border: none;
-    padding: 12px;
-    border-radius: 25px;
-    width: 100%;
-    font-weight: bold;
-    margin-top: 10px;
-}
+.login-wrapper { width: 100%; max-width: 350px; margin-top: 50px; }
+.pinterest-card { background: white; padding: 30px; border-radius: 25px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
+.btn-pinterest { background: #e60023; color: white; border: none; padding: 12px; border-radius: 25px; width: 100%; font-weight: bold; }
