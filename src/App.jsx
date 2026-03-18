@@ -4,10 +4,7 @@ import { GoogleAuth } from '@codetrix-studio/capacitor-google-auth'
 import './App.css'
 
 function App() {
-  // --- ESTADOS DE AUTENTICAÇÃO E TEMA ---
-  const [isLoggedIn, setIsLoggedIn] = useState(false)
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
+  // --- ESTADOS DE TEMA E GOOGLE ---
   const [googleUser, setGoogleUser] = useState(null)
   const [isDarkMode, setIsDarkMode] = useState(() => {
     return localStorage.getItem('focus_theme') === 'true'
@@ -36,7 +33,6 @@ function App() {
   useEffect(() => {
     const init = async () => {
       if (Capacitor.isNativePlatform()) {
-        setIsLoggedIn(true) 
         try {
           await GoogleAuth.initialize({
             clientId: '217686217989-l39dgiak467ikcba8tqv1ltrhq1oik5c.apps.googleusercontent.com',
@@ -74,13 +70,7 @@ function App() {
     document.body.classList.toggle('dark-mode', isDarkMode)
   }, [isDarkMode])
 
-  // --- LÓGICA DE LOGIN ---
-  const handleLogin = (e) => {
-    e.preventDefault()
-    if (email && password) setIsLoggedIn(true)
-    else alert("Preencha os campos 🔑")
-  }
-
+  // --- LÓGICA DE CONEXÃO GOOGLE ---
   const handleGoogleLogin = async () => {
     try {
       const user = await GoogleAuth.signIn()
@@ -144,7 +134,7 @@ function App() {
   const toggleDone = id => setTasks(tasks.map(t => t.id === id ? { ...t, done: !t.done } : t))
   const removeTask = id => setTasks(tasks.filter(t => t.id !== id))
 
-  // --- LÓGICA DO GOOGLE DRIVE (BACKUP CORRIGIDA) ---
+  // --- LÓGICA DO GOOGLE DRIVE (BACKUP) ---
   const handleExportDrive = async () => {
     try {
       if (!googleUser) { alert("Conecte o Google Drive primeiro"); return }
@@ -200,161 +190,151 @@ function App() {
 
   return (
     <div className="container-principal">
-      {isLoggedIn && (
-        <>
-          <button className="hamburger-menu" onClick={() => setIsMenuOpen(!isMenuOpen)}>
-            <div className="bar"></div><div className="bar"></div><div className="bar"></div>
-          </button>
-          {isMenuOpen && <div className="menu-overlay" onClick={() => setIsMenuOpen(false)}></div>}
-          <div className={`sidebar ${isMenuOpen ? 'open' : ''}`}>
-            <div className="sidebar-header">
-              <h3>Configurações</h3>
-              <button className="close-btn" onClick={() => setIsMenuOpen(false)}>&times;</button>
-            </div>
-            <div className="sidebar-content">
-              <button className="menu-item" onClick={handleGoogleLogin}>
-                <i className="bi bi-google me-2"></i> Conectar Google Drive
-              </button>
-              <button className="menu-item" onClick={handleImportDrive}>
-                <i className="bi bi-cloud-download me-2"></i> Importar do Drive
-              </button>
-              <button className="menu-item" onClick={handleExportDrive}>
-                <i className="bi bi-cloud-upload me-2"></i> Exportar para o Drive
-              </button>
-            </div>
-          </div>
-        </>
-      )}
+      {/* Botão de Menu e Sidebar */}
+      <button className="hamburger-menu" onClick={() => setIsMenuOpen(!isMenuOpen)}>
+        <div className="bar"></div><div className="bar"></div><div className="bar"></div>
+      </button>
 
+      {isMenuOpen && <div className="menu-overlay" onClick={() => setIsMenuOpen(false)}></div>}
+
+      <div className={`sidebar ${isMenuOpen ? 'open' : ''}`}>
+        <div className="sidebar-header">
+          <h3>Configurações</h3>
+          <button className="close-btn" onClick={() => setIsMenuOpen(false)}>&times;</button>
+        </div>
+        <div className="sidebar-content">
+          <button className="menu-item" onClick={handleGoogleLogin}>
+            <i className="bi bi-google me-2"></i> Conectar Google Drive
+          </button>
+          <button className="menu-item" onClick={handleImportDrive}>
+            <i className="bi bi-cloud-download me-2"></i> Importar do Drive
+          </button>
+          <button className="menu-item" onClick={handleExportDrive}>
+            <i className="bi bi-cloud-upload me-2"></i> Exportar para o Drive
+          </button>
+        </div>
+      </div>
+
+      {/* Toggle de Tema (Gatinho) */}
       <button className="btn-theme-toggle-cat" onClick={() => setIsDarkMode(!isDarkMode)}>
         <img src={isDarkMode ? "cat-open.png" : "cat-shy.png"} alt="Tema" className="cat-theme-icon" />
       </button>
 
-      {!isLoggedIn ? (
-        <div className="login-wrapper">
-          <div className="pinterest-card">
-            <h2 className="mb-4">Focus</h2>
-            <form onSubmit={handleLogin}>
-              <input type="email" className="form-control mb-3" placeholder="E-mail" value={email} onChange={(e) => setEmail(e.target.value)} />
-              <input type="password" className="form-control mb-3" placeholder="Senha" value={password} onChange={(e) => setPassword(e.target.value)} />
-              <button type="submit" className="btn-pinterest">Entrar</button>
-            </form>
-          </div>
+      {/* Conteúdo Principal do App */}
+      <div className="app-content">
+        <div className="card welcome-card">
+          <img src={isDarkMode ? "img2.png" : "img1.png"} className="card-img-top" alt="Banner" />
         </div>
-      ) : (
-        <div className="app-content">
-          <div className="card welcome-card">
-            <img src={isDarkMode ? "img2.png" : "img1.png"} className="card-img-top" alt="Banner" />
+
+        <div className="input-section">
+          <div className="title-container">
+            <div className="focus-reset-area" onClick={resetFocus}></div>
+            <h1 className="app-title" onMouseEnter={handleFocusEscape}>Focus</h1>
           </div>
 
-          <div className="input-section">
-            <div className="title-container">
-              <div className="focus-reset-area" onClick={resetFocus}></div>
-              <h1 className="app-title" onMouseEnter={handleFocusEscape}>Focus</h1>
-            </div>
+          <div className="progress mb-4">
+            <div className="progress-bar progress-bar-striped progress-bar-animated" style={{ width: `${progress}%`, backgroundColor: '#00acc1' }}></div>
+          </div>
 
-            <div className="progress mb-4">
-              <div className="progress-bar progress-bar-striped progress-bar-animated" style={{ width: `${progress}%`, backgroundColor: '#00acc1' }}></div>
-            </div>
-
-            <div className="filtros-container mb-4">
-              {['todas', 'Trabalho', 'Estudo', 'Pessoal'].map((cat) => (
-                <div key={cat} className={`card-filtro ${filter === cat ? 'active' : ''}`} onClick={() => setFilter(cat)}>
-                  <span>{cat === 'todas' ? 'Todas' : cat === 'Pessoal' ? 'Vida' : cat}</span>
-                </div>
-              ))}
-            </div>
-
-            <div className="planner-card card p-4 mb-4">
-              <input className="form-control mb-3" placeholder="O que vamos focar agora?" value={taskInput} onChange={(e) => setTaskInput(e.target.value)} />
-              <div className="row g-2 mb-3">
-                <div className="col-6">
-                  <label className="small">📅 Início</label>
-                  <input type="datetime-local" className="form-control" value={taskStart} onChange={(e) => setTaskStart(e.target.value)} />
-                </div>
-                <div className="col-6">
-                  <label className="small d-flex justify-content-between">
-                    🏁 Término
-                    <span style={{ fontSize: '0.65rem' }}>
-                      <input type="checkbox" checked={noDeadline} onChange={(e) => setNoDeadline(e.target.checked)} /> Indet.
-                    </span>
-                  </label>
-                  <input type="datetime-local" className="form-control" value={taskEnd} disabled={noDeadline} onChange={(e) => setTaskEnd(e.target.value)} />
-                </div>
+          <div className="filtros-container mb-4">
+            {['todas', 'Trabalho', 'Estudo', 'Pessoal'].map((cat) => (
+              <div key={cat} className={`card-filtro ${filter === cat ? 'active' : ''}`} onClick={() => setFilter(cat)}>
+                <span>{cat === 'todas' ? 'Todas' : cat === 'Pessoal' ? 'Vida' : cat}</span>
               </div>
+            ))}
+          </div>
 
-              {/* REPETIÇÃO: DIA SEMANA / MESES / HORA */}
-              {taskRepeat === 'Semanal' && (
-                <div className="d-flex flex-wrap gap-1 mb-3 justify-content-center">
-                  {diasSemana.map(d => (
-                    <button key={d} onClick={() => toggleSelection(d, selectedDays, setSelectedDays)} className={`btn btn-sm ${selectedDays.includes(d) ? 'btn-primary' : 'btn-outline-secondary'}`} style={{ fontSize: '0.7rem' }}>{d}</button>
-                  ))}
-                </div>
-              )}
-
-              {taskRepeat === 'Mensal' && (
-                <div className="d-flex flex-wrap gap-1 mb-3 justify-content-center">
-                  {mesesAno.map(m => (
-                    <button key={m} onClick={() => toggleSelection(m, selectedMonths, setSelectedMonths)} className={`btn btn-sm ${selectedMonths.includes(m) ? 'btn-primary' : 'btn-outline-secondary'}`} style={{ fontSize: '0.7rem' }}>{m}</button>
-                  ))}
-                </div>
-              )}
-
-              {taskRepeat === 'Hora' && (
-                <div className="mb-3">
-                  <label className="small">Intervalo (Horas:Minutos)</label>
-                  <input type="time" className="form-control" value={taskHourInterval} onChange={(e) => setTaskHourInterval(e.target.value)} />
-                </div>
-              )}
-
-              <div className="row g-2 mb-3">
-                <div className="col-4">
-                  <label className="small">🧠 Energia</label>
-                  <select className="form-select" value={taskEffort} onChange={(e) => setTaskEffort(e.target.value)}>
-                    <option value="Baixa ☕">Baixa</option>
-                    <option value="Média 💪">Média</option>
-                    <option value="Alta 🔥">Alta</option>
-                  </select>
-                </div>
-                <div className="col-4">
-                  <label className="small">🔄 Repetir</label>
-                  <select className="form-select" value={taskRepeat} onChange={(e) => setTaskRepeat(e.target.value)}>
-                    <option value="Não">Não</option>
-                    <option value="Hora">Hora</option>
-                    <option value="Diário">Diário</option>
-                    <option value="Semanal">Semanal</option>
-                    <option value="Mensal">Mensal</option>
-                  </select>
-                </div>
-                <div className="col-4">
-                  <label className="small">🏷️ Tag</label>
-                  <select className="form-select" value={taskTag} onChange={(e) => setTaskTag(e.target.value)}>
-                    <option value="Trabalho">Trabalho</option>
-                    <option value="Estudo">Estudo</option>
-                    <option value="Pessoal">Vida</option>
-                  </select>
-                </div>
+          <div className="planner-card card p-4 mb-4">
+            <input className="form-control mb-3" placeholder="O que vamos focar agora?" value={taskInput} onChange={(e) => setTaskInput(e.target.value)} />
+            
+            <div className="row g-2 mb-3">
+              <div className="col-6">
+                <label className="small">📅 Início</label>
+                <input type="datetime-local" className="form-control" value={taskStart} onChange={(e) => setTaskStart(e.target.value)} />
               </div>
-              <button onClick={addTask} className="btn btn-primary w-100 fw-bold">ADICIONAR</button>
+              <div className="col-6">
+                <label className="small d-flex justify-content-between">
+                  🏁 Término
+                  <span style={{ fontSize: '0.65rem' }}>
+                    <input type="checkbox" checked={noDeadline} onChange={(e) => setNoDeadline(e.target.checked)} /> Indet.
+                  </span>
+                </label>
+                <input type="datetime-local" className="form-control" value={taskEnd} disabled={noDeadline} onChange={(e) => setTaskEnd(e.target.value)} />
+              </div>
             </div>
 
-            <ul id="taskList">
-              {tasks.filter(t => filter === 'todas' || t.tag === filter).map(t => (
-                <li key={t.id} className={t.done ? 'done' : ''} onClick={() => toggleDone(t.id)}>
-                  <div className="d-flex justify-content-between align-items-start w-100">
-                    <div>
-                      <span className="badge" style={{ backgroundColor: t.tag === 'Trabalho' ? '#00acc1' : t.tag === 'Estudo' ? '#4db6ac' : '#9575cd' }}>{t.tag}</span>
-                      <h5 className="mt-2 mb-0">{t.text}</h5>
-                      {t.repeat !== 'Não' && <small className="d-block text-muted">🔄 {t.repeat}</small>}
-                    </div>
-                    <button className="btn btn-sm text-danger" onClick={(e) => { e.stopPropagation(); removeTask(t.id); }}>🗑️</button>
+            {/* SELEÇÃO DE REPETIÇÃO DINÂMICA */}
+            {taskRepeat === 'Semanal' && (
+              <div className="d-flex flex-wrap gap-1 mb-3 justify-content-center">
+                {diasSemana.map(d => (
+                  <button key={d} type="button" onClick={() => toggleSelection(d, selectedDays, setSelectedDays)} className={`btn btn-sm ${selectedDays.includes(d) ? 'btn-primary' : 'btn-outline-secondary'}`} style={{ fontSize: '0.7rem' }}>{d}</button>
+                ))}
+              </div>
+            )}
+
+            {taskRepeat === 'Mensal' && (
+              <div className="d-flex flex-wrap gap-1 mb-3 justify-content-center">
+                {mesesAno.map(m => (
+                  <button key={m} type="button" onClick={() => toggleSelection(m, selectedMonths, setSelectedMonths)} className={`btn btn-sm ${selectedMonths.includes(m) ? 'btn-primary' : 'btn-outline-secondary'}`} style={{ fontSize: '0.7rem' }}>{m}</button>
+                ))}
+              </div>
+            )}
+
+            {taskRepeat === 'Hora' && (
+              <div className="mb-3">
+                <label className="small">Intervalo (Horas:Minutos)</label>
+                <input type="time" className="form-control" value={taskHourInterval} onChange={(e) => setTaskHourInterval(e.target.value)} />
+              </div>
+            )}
+
+            <div className="row g-2 mb-3">
+              <div className="col-4">
+                <label className="small">🧠 Energia</label>
+                <select className="form-select" value={taskEffort} onChange={(e) => setTaskEffort(e.target.value)}>
+                  <option value="Baixa ☕">Baixa</option>
+                  <option value="Média 💪">Média</option>
+                  <option value="Alta 🔥">Alta</option>
+                </select>
+              </div>
+              <div className="col-4">
+                <label className="small">🔄 Repetir</label>
+                <select className="form-select" value={taskRepeat} onChange={(e) => setTaskRepeat(e.target.value)}>
+                  <option value="Não">Não</option>
+                  <option value="Hora">Hora</option>
+                  <option value="Diário">Diário</option>
+                  <option value="Semanal">Semanal</option>
+                  <option value="Mensal">Mensal</option>
+                </select>
+              </div>
+              <div className="col-4">
+                <label className="small">🏷️ Tag</label>
+                <select className="form-select" value={taskTag} onChange={(e) => setTaskTag(e.target.value)}>
+                  <option value="Trabalho">Trabalho</option>
+                  <option value="Estudo">Estudo</option>
+                  <option value="Pessoal">Vida</option>
+                </select>
+              </div>
+            </div>
+
+            <button onClick={addTask} className="btn btn-primary w-100 fw-bold">ADICIONAR</button>
+          </div>
+
+          <ul id="taskList">
+            {tasks.filter(t => filter === 'todas' || t.tag === filter).map(t => (
+              <li key={t.id} className={t.done ? 'done' : ''} onClick={() => toggleDone(t.id)}>
+                <div className="d-flex justify-content-between align-items-start w-100">
+                  <div>
+                    <span className="badge" style={{ backgroundColor: t.tag === 'Trabalho' ? '#00acc1' : t.tag === 'Estudo' ? '#4db6ac' : '#9575cd' }}>{t.tag}</span>
+                    <h5 className="mt-2 mb-0">{t.text}</h5>
+                    {t.repeat !== 'Não' && <small className="d-block text-muted">🔄 {t.repeat}</small>}
                   </div>
-                </li>
-              ))}
-            </ul>
-          </div>
+                  <button className="btn btn-sm text-danger" onClick={(e) => { e.stopPropagation(); removeTask(t.id); }}>🗑️</button>
+                </div>
+              </li>
+            ))}
+          </ul>
         </div>
-      )}
+      </div>
     </div>
   )
 }
