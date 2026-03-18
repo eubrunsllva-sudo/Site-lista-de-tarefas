@@ -36,10 +36,11 @@ function App() {
   useEffect(() => {
     const init = async () => {
       if (Capacitor.isNativePlatform()) {
-        setIsLoggedIn(true) // No mobile, entra direto
+        setIsLoggedIn(true) 
         try {
           await GoogleAuth.initialize({
-            scopes: ['https://www.googleapis.com/auth/drive.appdata']
+            clientId: '217686217989-l39dgiak467ikcba8tqv1ltrhq1oik5c.apps.googleusercontent.com',
+            scopes: ['https://www.googleapis.com/auth/drive.appdata', 'email', 'profile']
           })
         } catch (e) {
           console.warn("GoogleAuth já inicializado")
@@ -64,12 +65,8 @@ function App() {
 
   useEffect(() => {
     localStorage.setItem('focus_tasks', JSON.stringify(tasks))
-    if (tasks.length === 0) {
-      setProgress(0)
-    } else {
-      const doneTasks = tasks.filter(t => t.done).length
-      setProgress((doneTasks / tasks.length) * 100)
-    }
+    const doneTasks = tasks.length === 0 ? 0 : tasks.filter(t => t.done).length
+    setProgress(tasks.length === 0 ? 0 : (doneTasks / tasks.length) * 100)
   }, [tasks])
 
   useEffect(() => {
@@ -110,9 +107,7 @@ function App() {
   const resetFocus = () => {
     const title = document.querySelector('.app-title')
     if (title) {
-      title.style.position = 'relative'
-      title.style.left = '0'; title.style.top = '0'
-      title.style.transform = 'none'; title.style.zIndex = '10'
+      Object.assign(title.style, { position: 'relative', left: '0', top: '0', transform: 'none', zIndex: '10' })
     }
   }
 
@@ -143,27 +138,44 @@ function App() {
     }
     setTasks([...tasks, newTask])
     setTaskInput(''); setTaskEnd(''); setNoDeadline(false)
+    setSelectedDays([]); setSelectedMonths([]); setTaskHourInterval('00:00')
   }
 
   const toggleDone = id => setTasks(tasks.map(t => t.id === id ? { ...t, done: !t.done } : t))
   const removeTask = id => setTasks(tasks.filter(t => t.id !== id))
 
-  // --- LÓGICA DO GOOGLE DRIVE (BACKUP) ---
+  // --- LÓGICA DO GOOGLE DRIVE (BACKUP CORRIGIDA) ---
   const handleExportDrive = async () => {
     try {
       if (!googleUser) { alert("Conecte o Google Drive primeiro"); return }
       const accessToken = googleUser.authentication.accessToken
-      const listRes = await fetch('https://www.googleapis.com/drive/v3/files?spaces=appDataFolder&q=name="focus_backup.json"', { headers: { Authorization: `Bearer ${accessToken}` } })
+      
+      const listRes = await fetch(`https://www.googleapis.com/drive/v3/files?spaces=appDataFolder&q=name="focus_backup.json"&t=${Date.now()}`, { 
+        headers: { Authorization: `Bearer ${accessToken}` } 
+      })
       const listData = await listRes.json()
       const existingFileId = listData.files?.[0]?.id
       
+      const metadata = { name: 'focus_backup.json', mimeType: 'application/json' }
+      if (!existingFileId) metadata.parents = ['appDataFolder']
+
       const formData = new FormData()
-      formData.append('metadata', new Blob([JSON.stringify({ name: 'focus_backup.json', mimeType: 'application/json', parents: ['appDataFolder'] })], { type: 'application/json' }))
+      formData.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }))
       formData.append('file', new Blob([JSON.stringify({ date: new Date().toISOString(), tasks })], { type: 'application/json' }))
 
-      const url = existingFileId ? `https://www.googleapis.com/upload/drive/v3/files/${existingFileId}?uploadType=multipart` : 'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart'
-      await fetch(url, { method: existingFileId ? 'PATCH' : 'POST', headers: { Authorization: `Bearer ${accessToken}` }, body: formData })
-      alert("Backup salvo no Drive! ✅"); setIsMenuOpen(false)
+      const url = existingFileId 
+        ? `https://www.googleapis.com/upload/drive/v3/files/${existingFileId}?uploadType=multipart` 
+        : 'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart'
+      
+      const res = await fetch(url, { 
+        method: existingFileId ? 'PATCH' : 'POST', 
+        headers: { Authorization: `Bearer ${accessToken}` }, 
+        body: formData 
+      })
+
+      if (res.ok) alert("Backup salvo no Drive! ✅")
+      else throw new Error("Erro no servidor Google")
+      setIsMenuOpen(false)
     } catch (e) { alert("Erro ao exportar: " + e.message) }
   }
 
@@ -171,8 +183,9 @@ function App() {
     try {
       if (!googleUser) { alert("Conecte o Google Drive primeiro"); return }
       const accessToken = googleUser.authentication.accessToken
-      const listRes = await fetch('https://www.googleapis.com/drive/v3/files?spaces=appDataFolder&q=name="focus_backup.json"', { headers: { Authorization: `Bearer ${accessToken}` } })
+      const listRes = await fetch(`https://www.googleapis.com/drive/v3/files?spaces=appDataFolder&q=name="focus_backup.json"&t=${Date.now()}`, { headers: { Authorization: `Bearer ${accessToken}` } })
       const listData = await listRes.json()
+      
       if (listData.files?.length > 0) {
         const fileRes = await fetch(`https://www.googleapis.com/drive/v3/files/${listData.files[0].id}?alt=media`, { headers: { Authorization: `Bearer ${accessToken}` } })
         const backup = await fileRes.json()
@@ -244,7 +257,6 @@ function App() {
               <div className="progress-bar progress-bar-striped progress-bar-animated" style={{ width: `${progress}%`, backgroundColor: '#00acc1' }}></div>
             </div>
 
-            {/* Filtros */}
             <div className="filtros-container mb-4">
               {['todas', 'Trabalho', 'Estudo', 'Pessoal'].map((cat) => (
                 <div key={cat} className={`card-filtro ${filter === cat ? 'active' : ''}`} onClick={() => setFilter(cat)}>
@@ -253,7 +265,6 @@ function App() {
               ))}
             </div>
 
-            {/* Planner Card */}
             <div className="planner-card card p-4 mb-4">
               <input className="form-control mb-3" placeholder="O que vamos focar agora?" value={taskInput} onChange={(e) => setTaskInput(e.target.value)} />
               <div className="row g-2 mb-3">
@@ -272,7 +283,30 @@ function App() {
                 </div>
               </div>
 
-              {/* Repetição e Tags */}
+              {/* REPETIÇÃO: DIA SEMANA / MESES / HORA */}
+              {taskRepeat === 'Semanal' && (
+                <div className="d-flex flex-wrap gap-1 mb-3 justify-content-center">
+                  {diasSemana.map(d => (
+                    <button key={d} onClick={() => toggleSelection(d, selectedDays, setSelectedDays)} className={`btn btn-sm ${selectedDays.includes(d) ? 'btn-primary' : 'btn-outline-secondary'}`} style={{ fontSize: '0.7rem' }}>{d}</button>
+                  ))}
+                </div>
+              )}
+
+              {taskRepeat === 'Mensal' && (
+                <div className="d-flex flex-wrap gap-1 mb-3 justify-content-center">
+                  {mesesAno.map(m => (
+                    <button key={m} onClick={() => toggleSelection(m, selectedMonths, setSelectedMonths)} className={`btn btn-sm ${selectedMonths.includes(m) ? 'btn-primary' : 'btn-outline-secondary'}`} style={{ fontSize: '0.7rem' }}>{m}</button>
+                  ))}
+                </div>
+              )}
+
+              {taskRepeat === 'Hora' && (
+                <div className="mb-3">
+                  <label className="small">Intervalo (Horas:Minutos)</label>
+                  <input type="time" className="form-control" value={taskHourInterval} onChange={(e) => setTaskHourInterval(e.target.value)} />
+                </div>
+              )}
+
               <div className="row g-2 mb-3">
                 <div className="col-4">
                   <label className="small">🧠 Energia</label>
@@ -304,7 +338,6 @@ function App() {
               <button onClick={addTask} className="btn btn-primary w-100 fw-bold">ADICIONAR</button>
             </div>
 
-            {/* Lista de Tarefas */}
             <ul id="taskList">
               {tasks.filter(t => filter === 'todas' || t.tag === filter).map(t => (
                 <li key={t.id} className={t.done ? 'done' : ''} onClick={() => toggleDone(t.id)}>
@@ -312,6 +345,7 @@ function App() {
                     <div>
                       <span className="badge" style={{ backgroundColor: t.tag === 'Trabalho' ? '#00acc1' : t.tag === 'Estudo' ? '#4db6ac' : '#9575cd' }}>{t.tag}</span>
                       <h5 className="mt-2 mb-0">{t.text}</h5>
+                      {t.repeat !== 'Não' && <small className="d-block text-muted">🔄 {t.repeat}</small>}
                     </div>
                     <button className="btn btn-sm text-danger" onClick={(e) => { e.stopPropagation(); removeTask(t.id); }}>🗑️</button>
                   </div>
