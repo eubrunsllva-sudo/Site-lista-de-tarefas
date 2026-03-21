@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Capacitor } from '@capacitor/core'
 import { GoogleAuth } from '@codetrix-studio/capacitor-google-auth'
+import { LocalNotifications } from '@capacitor/local-notifications'
 import './App.css'
 
 function App() {
@@ -38,8 +39,18 @@ function App() {
             clientId: '217686217989-l39dgiak467ikcba8tqv1ltrhq1oik5c.apps.googleusercontent.com',
             scopes: ['https://www.googleapis.com/auth/drive.appdata', 'email', 'profile']
           })
+
+          await LocalNotifications.createChannel({
+            id: 'focustasks',
+            name: 'Alertas de Tarefas',
+            description: 'Notificações de início de tarefas',
+            importance: 5,
+            visibility: 1,
+            vibration: true,
+            sound: 'beep.wav'
+          });
         } catch (e) {
-          console.warn("GoogleAuth já inicializado")
+          console.warn("Erro na inicialização nativa:", e)
         }
       }
     }
@@ -106,11 +117,17 @@ function App() {
     state.includes(item) ? setState(state.filter(i => i !== item)) : setState([...state, item])
   }
 
-  const addTask = () => {
+  const addTask = async () => {
     if (!taskInput.trim() || !taskStart || (!noDeadline && !taskEnd)) {
       alert("Preencha os campos obrigatórios! 🧠")
       return
     }
+
+    const startDate = new Date(taskStart);
+    startDate.setSeconds(0);
+    startDate.setMilliseconds(0);
+    const notificationDate = new Date(startDate.getTime() - 60000); 
+
     const newTask = {
       id: Date.now(),
       text: taskInput,
@@ -126,6 +143,37 @@ function App() {
       tag: taskTag,
       done: false
     }
+
+    if (Capacitor.isNativePlatform()) {
+      try {
+        const perms = await LocalNotifications.checkPermissions();
+        if (perms.display !== 'granted') {
+          await LocalNotifications.requestPermissions();
+        }
+
+        await LocalNotifications.schedule({
+          notifications: [
+            {
+              title: "O Focus te chama! 🚀",
+              body: `Sua tarefa "${taskInput}" começa em 1 minuto.`,
+              id: Math.floor(Date.now() / 1000), 
+              schedule: { 
+                at: notificationDate,
+                allowWhileIdle: true,
+                exact: true,
+                repeats: false
+              },
+              channelId: 'focustasks',
+              smallIcon: 'ic_launcher',
+              importance: 5
+            }
+          ]
+        });
+      } catch (e) {
+        console.error("Erro na notificação:", e);
+      }
+    }
+
     setTasks([...tasks, newTask])
     setTaskInput(''); setTaskEnd(''); setNoDeadline(false)
     setSelectedDays([]); setSelectedMonths([]); setTaskHourInterval('00:00')
@@ -134,35 +182,29 @@ function App() {
   const toggleDone = id => setTasks(tasks.map(t => t.id === id ? { ...t, done: !t.done } : t))
   const removeTask = id => setTasks(tasks.filter(t => t.id !== id))
 
-  // --- LÓGICA DO GOOGLE DRIVE (BACKUP) ---
+  // --- LÓGICA DO GOOGLE DRIVE ---
   const handleExportDrive = async () => {
     try {
       if (!googleUser) { alert("Conecte o Google Drive primeiro"); return }
       const accessToken = googleUser.authentication.accessToken
-      
       const listRes = await fetch(`https://www.googleapis.com/drive/v3/files?spaces=appDataFolder&q=name="focus_backup.json"&t=${Date.now()}`, { 
         headers: { Authorization: `Bearer ${accessToken}` } 
       })
       const listData = await listRes.json()
       const existingFileId = listData.files?.[0]?.id
-      
       const metadata = { name: 'focus_backup.json', mimeType: 'application/json' }
       if (!existingFileId) metadata.parents = ['appDataFolder']
-
       const formData = new FormData()
       formData.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }))
       formData.append('file', new Blob([JSON.stringify({ date: new Date().toISOString(), tasks })], { type: 'application/json' }))
-
       const url = existingFileId 
         ? `https://www.googleapis.com/upload/drive/v3/files/${existingFileId}?uploadType=multipart` 
         : 'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart'
-      
       const res = await fetch(url, { 
         method: existingFileId ? 'PATCH' : 'POST', 
         headers: { Authorization: `Bearer ${accessToken}` }, 
         body: formData 
       })
-
       if (res.ok) alert("Backup salvo no Drive! ✅")
       else throw new Error("Erro no servidor Google")
       setIsMenuOpen(false)
@@ -175,7 +217,6 @@ function App() {
       const accessToken = googleUser.authentication.accessToken
       const listRes = await fetch(`https://www.googleapis.com/drive/v3/files?spaces=appDataFolder&q=name="focus_backup.json"&t=${Date.now()}`, { headers: { Authorization: `Bearer ${accessToken}` } })
       const listData = await listRes.json()
-      
       if (listData.files?.length > 0) {
         const fileRes = await fetch(`https://www.googleapis.com/drive/v3/files/${listData.files[0].id}?alt=media`, { headers: { Authorization: `Bearer ${accessToken}` } })
         const backup = await fileRes.json()
@@ -188,9 +229,15 @@ function App() {
     } catch (e) { alert("Erro ao importar: " + e.message) }
   }
 
+  // --- AUXILIAR FORMATAÇÃO ---
+  const formatDateTime = (dateStr) => {
+    if (!dateStr) return '';
+    const date = new Date(dateStr);
+    return date.toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
+  }
+
   return (
     <div className="container-principal">
-      {/* Botão de Menu e Sidebar */}
       <button className="hamburger-menu" onClick={() => setIsMenuOpen(!isMenuOpen)}>
         <div className="bar"></div><div className="bar"></div><div className="bar"></div>
       </button>
@@ -215,12 +262,10 @@ function App() {
         </div>
       </div>
 
-      {/* Toggle de Tema (Gatinho) */}
       <button className="btn-theme-toggle-cat" onClick={() => setIsDarkMode(!isDarkMode)}>
         <img src={isDarkMode ? "cat-open.png" : "cat-shy.png"} alt="Tema" className="cat-theme-icon" />
       </button>
 
-      {/* Conteúdo Principal do App */}
       <div className="app-content">
         <div className="card welcome-card">
           <img src={isDarkMode ? "img2.png" : "img1.png"} className="card-img-top" alt="Banner" />
@@ -263,7 +308,6 @@ function App() {
               </div>
             </div>
 
-            {/* SELEÇÃO DE REPETIÇÃO DINÂMICA */}
             {taskRepeat === 'Semanal' && (
               <div className="d-flex flex-wrap gap-1 mb-3 justify-content-center">
                 {diasSemana.map(d => (
@@ -323,10 +367,17 @@ function App() {
             {tasks.filter(t => filter === 'todas' || t.tag === filter).map(t => (
               <li key={t.id} className={t.done ? 'done' : ''} onClick={() => toggleDone(t.id)}>
                 <div className="d-flex justify-content-between align-items-start w-100">
-                  <div>
+                  <div className="flex-grow-1">
                     <span className="badge" style={{ backgroundColor: t.tag === 'Trabalho' ? '#00acc1' : t.tag === 'Estudo' ? '#4db6ac' : '#9575cd' }}>{t.tag}</span>
-                    <h5 className="mt-2 mb-0">{t.text}</h5>
-                    {t.repeat !== 'Não' && <small className="d-block text-muted">🔄 {t.repeat}</small>}
+                    <h5 className="mt-2 mb-1">{t.text}</h5>
+                    
+                    {/* --- INFORMAÇÕES EXTRAS DA TAREFA --- */}
+                    <div style={{ fontSize: '0.8rem', opacity: 0.8 }}>
+                      <div>📅 <b>Início:</b> {formatDateTime(t.start)}</div>
+                      {t.end && <div>🏁 <b>Término:</b> {formatDateTime(t.end)}</div>}
+                      <div>🧠 <b>Energia:</b> {t.effort}</div>
+                      {t.repeat !== 'Não' && <div className="text-info">🔄 Repete: {t.repeat}</div>}
+                    </div>
                   </div>
                   <button className="btn btn-sm text-danger" onClick={(e) => { e.stopPropagation(); removeTask(t.id); }}>🗑️</button>
                 </div>
