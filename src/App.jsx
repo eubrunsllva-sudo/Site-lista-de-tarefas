@@ -15,8 +15,8 @@ function App() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [selectedDays, setSelectedDays] = useState([])
   const [selectedMonths, setSelectedMonths] = useState([])
-  const diasSemana = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb']
-  const mesesAno = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez']
+  const diasSemana = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb']
+  const mesesAno = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez']
 
   // --- ESTADOS DO FORMULÁRIO E TAREFAS ---
   const [taskInput, setTaskInput] = useState('')
@@ -126,7 +126,7 @@ function App() {
     const startDate = new Date(taskStart);
     startDate.setSeconds(0);
     startDate.setMilliseconds(0);
-    const notificationDate = new Date(startDate.getTime() - 60000); 
+    const notificationDate = new Date(startDate.getTime() - 60000);
 
     const newTask = {
       id: Date.now(),
@@ -156,8 +156,8 @@ function App() {
             {
               title: "O Focus te chama! 🚀",
               body: `Sua tarefa "${taskInput}" começa em 1 minuto.`,
-              id: Math.floor(Date.now() / 1000), 
-              schedule: { 
+              id: Math.floor(Date.now() / 1000),
+              schedule: {
                 at: notificationDate,
                 allowWhileIdle: true,
                 exact: true,
@@ -187,8 +187,8 @@ function App() {
     try {
       if (!googleUser) { alert("Conecte o Google Drive primeiro"); return }
       const accessToken = googleUser.authentication.accessToken
-      const listRes = await fetch(`https://www.googleapis.com/drive/v3/files?spaces=appDataFolder&q=name="focus_backup.json"&t=${Date.now()}`, { 
-        headers: { Authorization: `Bearer ${accessToken}` } 
+      const listRes = await fetch(`https://www.googleapis.com/drive/v3/files?spaces=appDataFolder&q=name="focus_backup.json"&t=${Date.now()}`, {
+        headers: { Authorization: `Bearer ${accessToken}` }
       })
       const listData = await listRes.json()
       const existingFileId = listData.files?.[0]?.id
@@ -197,13 +197,13 @@ function App() {
       const formData = new FormData()
       formData.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }))
       formData.append('file', new Blob([JSON.stringify({ date: new Date().toISOString(), tasks })], { type: 'application/json' }))
-      const url = existingFileId 
-        ? `https://www.googleapis.com/upload/drive/v3/files/${existingFileId}?uploadType=multipart` 
+      const url = existingFileId
+        ? `https://www.googleapis.com/upload/drive/v3/files/${existingFileId}?uploadType=multipart`
         : 'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart'
-      const res = await fetch(url, { 
-        method: existingFileId ? 'PATCH' : 'POST', 
-        headers: { Authorization: `Bearer ${accessToken}` }, 
-        body: formData 
+      const res = await fetch(url, {
+        method: existingFileId ? 'PATCH' : 'POST',
+        headers: { Authorization: `Bearer ${accessToken}` },
+        body: formData
       })
       if (res.ok) alert("Backup salvo no Drive! ✅")
       else throw new Error("Erro no servidor Google")
@@ -291,7 +291,7 @@ function App() {
 
           <div className="planner-card card p-4 mb-4">
             <input className="form-control mb-3" placeholder="O que vamos focar agora?" value={taskInput} onChange={(e) => setTaskInput(e.target.value)} />
-            
+
             <div className="row g-2 mb-3">
               <div className="col-6">
                 <label className="small">📅 Início</label>
@@ -370,7 +370,7 @@ function App() {
                   <div className="flex-grow-1">
                     <span className="badge" style={{ backgroundColor: t.tag === 'Trabalho' ? '#00acc1' : t.tag === 'Estudo' ? '#4db6ac' : '#9575cd' }}>{t.tag}</span>
                     <h5 className="mt-2 mb-1">{t.text}</h5>
-                    
+
                     {/* --- INFORMAÇÕES EXTRAS DA TAREFA --- */}
                     <div style={{ fontSize: '0.8rem', opacity: 0.8 }}>
                       <div>📅 <b>Início:</b> {formatDateTime(t.start)}</div>

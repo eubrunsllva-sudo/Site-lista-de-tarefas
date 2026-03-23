@@ -7,7 +7,7 @@
 
 body {
     font-family: 'Segoe UI', sans-serif;
-    background: linear-gradient(135deg, #e0f7fa 0%, #b2ebf2 50%, #81d4fa 100%) no-repeat;
+    background: linear-gradient(135deg, #497d83 0%, #b2ebf2 50%, #075274 100%) no-repeat;
     background-attachment: fixed;
     color: #37474f;
     min-height: 100vh;
@@ -16,6 +16,21 @@ body {
     overflow-x: hidden;
 }
 
+/* Isso arredonda os quatro cantos da imagem */
+.welcome-card .card-img-top {
+  border-radius: 10px !important; 
+  /* Se quiser arredondar apenas em cima: */
+  /* border-top-left-radius: 20px; */
+  /* border-top-right-radius: 20px; */
+}
+
+/* Opcional: Adicionar uma sombra suave para combinar com as bordas */
+.welcome-card {
+  border: none; /* Remove a borda padrão do card se quiser */
+  border-radius: 20px;
+
+  box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+}
 .container-principal {
     display: flex;
     flex-direction: column;
@@ -44,7 +59,7 @@ body {
     justify-content: center;
     align-items: center;
     width: 100%;
-    height: 120px; 
+    height: 120px;
     margin: 10px 0;
 }
 
@@ -65,11 +80,11 @@ body {
     margin: 0 !important;
     display: inline-block;
     cursor: pointer;
-    background: linear-gradient(135deg, #00acc1 0%, #7dd3fc 50%, #93c5fd 100%) !important;
+    background: linear-gradient(135deg, #0a00c1 0%, #0870a0 50%, #043f7e 100%) !important;
     -webkit-background-clip: text !important;
     background-clip: text !important;
     -webkit-text-fill-color: transparent !important;
-    position: relative; 
+    position: relative;
     z-index: 10;
     transition: all 0.7s cubic-bezier(0.18, 0.89, 0.32, 1.28);
 }
@@ -79,7 +94,7 @@ body {
    ============================================================ */
 .hamburger-menu {
     position: fixed;
-    top: 20px;
+    top: 40px;
     left: 20px;
     z-index: 11000 !important;
     background: white;
@@ -90,7 +105,7 @@ body {
     display: flex;
     flex-direction: column;
     gap: 5px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
 .bar {
@@ -107,9 +122,9 @@ body {
     width: 280px;
     height: 100%;
     background-color: white;
-    z-index: 12000; 
+    z-index: 12000;
     transition: all 0.4s ease;
-    box-shadow: 4px 0 25px rgba(0,0,0,0.15);
+    box-shadow: 4px 0 25px rgba(0, 0, 0, 0.15);
     padding: 25px;
 }
 
@@ -121,7 +136,7 @@ body {
     position: fixed;
     inset: 0;
     background: rgba(0, 0, 0, 0.4);
-    backdrop-filter: blur(2px);
+    backdrop-filter: blur(6px);
     z-index: 10500;
 }
 
@@ -156,19 +171,31 @@ body {
     font-size: 0.8rem;
     font-weight: 600;
     border: 1px solid #e0f2f1;
+    cursor: pointer;
+  transition: all 0.3s ease; /* Isso cria o efeito de animação ao clicar */
+  /* ... suas outras regras de padding, border-radius, etc ... */
 }
 
+/* Cor padrão do destaque (Tema Claro) */
 .card-filtro.active {
-    background: #00acc1;
-    color: white;
-    border-color: #00acc1;
+  background-color: #1d808d !important;
+  color: white !important;
+  box-shadow: 0 4px 10px rgba(0, 172, 193, 0.4);
+  transform: scale(1.05); /* Pequena animação de "pulo" */
+}
+
+/* Ajuste específico para o Tema Escuro (Dark Mode) */
+body.dark-mode .card-filtro.active {
+  background-color: #018091 !important; /* Mantém o azul ou use um mais vibrante */
+  color: #ffffff !important;
+  border: 1px solid rgba(255, 255, 255, 0.2); /* Adiciona uma borda sutil para destacar no escuro */
 }
 
 .progress {
     width: 100%;
     height: 10px;
     border-radius: 10px;
-    background-color: rgba(255,255,255,0.5);
+    background-color: rgba(255, 255, 255, 0.5);
 }
 
 /* ============================================================
@@ -186,7 +213,7 @@ body {
     margin-bottom: 10px;
     border-radius: 12px;
     border-left: 6px solid #00acc1;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
     cursor: pointer;
     transition: 0.2s;
 }
@@ -209,9 +236,9 @@ body.dark-mode {
     color: #f1f5f9;
 }
 
-body.dark-mode .hamburger-menu, 
+body.dark-mode .hamburger-menu,
 body.dark-mode .sidebar,
-body.dark-mode .planner-card, 
+body.dark-mode .planner-card,
 body.dark-mode .card-filtro,
 body.dark-mode #taskList li,
 body.dark-mode .pinterest-card {
@@ -226,26 +253,72 @@ body.dark-mode .form-select {
     border-color: #334155;
     color: white;
 }
+/* Cor do texto que você digita no Dark Mode */
+body.dark-mode .form-control {
+ /* Um cinza escuro para o fundo do campo */
+  color: #ffffff !important;   /* Cor do texto quando você está digitando */
+  border: 1px solid #444;
+}
+
+/* Cor da frase "O que vamos focar agora?" (Placeholder) no Dark Mode */
+body.dark-mode .form-control::placeholder {
+  color: rgba(255, 255, 255, 0.7) !important; /* Branco com 70% de opacidade */
+}
+
+/* Suporte para diferentes navegadores (Chrome, Firefox, Safari) */
+body.dark-mode .form-control::-webkit-input-placeholder {
+  color: rgba(255, 255, 255, 0.7) !important;
+}
+
+body.dark-mode .form-control::-moz-placeholder {
+  color: rgba(255, 255, 255, 0.7) !important;
+}
 
 /* ============================================================
-   BOTÃO GATO E LOGIN
+   BOTÃO GATO
    ============================================================ */
 .btn-theme-toggle-cat {
     position: fixed;
-    top: 15px;
-    right: 15px;
+    top: 32px;
+    right: 8px;
     z-index: 13000;
     border: none;
     background: transparent !important;
-    width: 70px; 
+    width: 70px;
     height: 70px;
     cursor: pointer;
     transition: transform 0.3s;
 }
 
-.btn-theme-toggle-cat:hover { transform: scale(1.1); }
-.cat-theme-icon { width: 100%; height: 100%; object-fit: contain; }
+.btn-theme-toggle-cat:hover {
+    transform: scale(1.1);
+}
 
-.login-wrapper { width: 100%; max-width: 350px; margin-top: 50px; }
-.pinterest-card { background: white; padding: 30px; border-radius: 25px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
-.btn-pinterest { background: #e60023; color: white; border: none; padding: 12px; border-radius: 25px; width: 100%; font-weight: bold; }
+.cat-theme-icon {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+.login-wrapper {
+    width: 100%;
+    max-width: 350px;
+    margin-top: 50px;
+}
+
+.pinterest-card {
+    background: white;
+    padding: 30px;
+    border-radius: 25px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+}
+
+.btn-pinterest {
+    background: #e60023;
+    color: white;
+    border: none;
+    padding: 12px;
+    border-radius: 25px;
+    width: 100%;
+    font-weight: bold;
+}
