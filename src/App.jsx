@@ -2,9 +2,18 @@ import { useState, useEffect } from 'react'
 import { Capacitor } from '@capacitor/core'
 import { GoogleAuth } from '@codetrix-studio/capacitor-google-auth'
 import { LocalNotifications } from '@capacitor/local-notifications'
+
+// IMPORTAÇÃO DA IMAGEM DO GATINHO PRO
+// Certifique-se de que o arquivo cat-pro.png está na pasta: src/assets/
+import catProImg from './assets/cat-pro.png' 
+
 import './App.css'
 
 function App() {
+  // --- ESTADOS DE PAGAMENTO E MODAL ---
+  const [isPro, setIsPro] = useState(() => localStorage.getItem('focus_pro_status') === 'true');
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+
   // --- ESTADOS DE TEMA E GOOGLE ---
   const [googleUser, setGoogleUser] = useState(null)
   const [isDarkMode, setIsDarkMode] = useState(() => {
@@ -36,7 +45,7 @@ function App() {
       if (Capacitor.isNativePlatform()) {
         try {
           await GoogleAuth.initialize({
-            clientId: '217686217989-l39dgiak467ikcba8tqv1ltrhq1oik5c.apps.googleusercontent.com',
+            clientId: '217686217989-vb0q07jubj16crcjmi1ruknkbfg7cl3m.apps.googleusercontent.com',
             scopes: ['https://www.googleapis.com/auth/drive.appdata', 'email', 'profile']
           })
 
@@ -81,8 +90,21 @@ function App() {
     document.body.classList.toggle('dark-mode', isDarkMode)
   }, [isDarkMode])
 
-  // --- LÓGICA DE CONEXÃO GOOGLE ---
+  // --- LÓGICA DE COMPRA (SIMULADA) ---
+  const handlePurchase = () => {
+    setIsPro(true);
+    localStorage.setItem('focus_pro_status', 'true');
+    setShowUpgradeModal(false);
+    alert("Parabéns! Você agora é Focus Plus! 🐾✨");
+  };
+
+  // --- LÓGICA DE CONEXÃO GOOGLE (PROTEGIDA) ---
   const handleGoogleLogin = async () => {
+    if (!isPro) {
+      setIsMenuOpen(false);
+      setShowUpgradeModal(true);
+      return;
+    }
     try {
       const user = await GoogleAuth.signIn()
       setGoogleUser(user)
@@ -182,8 +204,9 @@ function App() {
   const toggleDone = id => setTasks(tasks.map(t => t.id === id ? { ...t, done: !t.done } : t))
   const removeTask = id => setTasks(tasks.filter(t => t.id !== id))
 
-  // --- LÓGICA DO GOOGLE DRIVE ---
+  // --- LÓGICA DO GOOGLE DRIVE (PROTEGIDA) ---
   const handleExportDrive = async () => {
+    if (!isPro) { setIsMenuOpen(false); setShowUpgradeModal(true); return; }
     try {
       if (!googleUser) { alert("Conecte o Google Drive primeiro"); return }
       const accessToken = googleUser.authentication.accessToken
@@ -212,6 +235,7 @@ function App() {
   }
 
   const handleImportDrive = async () => {
+    if (!isPro) { setIsMenuOpen(false); setShowUpgradeModal(true); return; }
     try {
       if (!googleUser) { alert("Conecte o Google Drive primeiro"); return }
       const accessToken = googleUser.authentication.accessToken
@@ -238,6 +262,26 @@ function App() {
 
   return (
     <div className="container-principal">
+      
+      {/* --- MODAL UPGRADE (FOCUS PLUS) --- */}
+      {showUpgradeModal && (
+        <div className="modal-premium-overlay" onClick={() => setShowUpgradeModal(false)}>
+          <div className="modal-premium-content" onClick={e => e.stopPropagation()}>
+            {/* AGORA USANDO A IMAGEM IMPORTADA CORRETAMENTE */}
+            <img src={catProImg} alt="Pro" className="cat-pro-img" />
+            <h2>Focus Plus 🐾</h2>
+            <p>Leve suas tarefas para qualquer lugar com o <b>Backup no Google Drive</b> e livre-se dos anúncios!</p>
+            <div className="benefits-list">
+              <div>✅ Backup Automático na Nuvem</div>
+              <div>✅ Sem anúncios chatos</div>
+              <div>✅ Apoie o desenvolvedor</div>
+            </div>
+            <button className="btn-buy" onClick={handlePurchase}>LIBERAR POR R$ 9,90</button>
+            <button className="btn-close-modal" onClick={() => setShowUpgradeModal(false)}>Agora não</button>
+          </div>
+        </div>
+      )}
+
       <button className="hamburger-menu" onClick={() => setIsMenuOpen(!isMenuOpen)}>
         <div className="bar"></div><div className="bar"></div><div className="bar"></div>
       </button>
@@ -251,7 +295,7 @@ function App() {
         </div>
         <div className="sidebar-content">
           <button className="menu-item" onClick={handleGoogleLogin}>
-            <i className="bi bi-google me-2"></i> Conectar Google Drive
+            <i className="bi bi-google me-2"></i> {isPro ? "Conectar Google Drive" : "Ativar Focus Plus ✨"}
           </button>
           <button className="menu-item" onClick={handleImportDrive}>
             <i className="bi bi-cloud-download me-2"></i> Importar do Drive
@@ -259,6 +303,11 @@ function App() {
           <button className="menu-item" onClick={handleExportDrive}>
             <i className="bi bi-cloud-upload me-2"></i> Exportar para o Drive
           </button>
+          {!isPro && (
+            <div className="sidebar-footer">
+              <small>Versão Gratuita</small>
+            </div>
+          )}
         </div>
       </div>
 
@@ -267,6 +316,13 @@ function App() {
       </button>
 
       <div className="app-content">
+        {!isPro && (
+          <div className="ad-container-top">
+             <small>Anúncio | Remova no Focus Plus</small>
+             <div className="ad-box-placeholder">Espaço do Banner</div>
+          </div>
+        )}
+
         <div className="card welcome-card">
           <img src={isDarkMode ? "img2.png" : "img1.png"} className="card-img-top" alt="Banner" />
         </div>
@@ -371,7 +427,6 @@ function App() {
                     <span className="badge" style={{ backgroundColor: t.tag === 'Trabalho' ? '#00acc1' : t.tag === 'Estudo' ? '#4db6ac' : '#9575cd' }}>{t.tag}</span>
                     <h5 className="mt-2 mb-1">{t.text}</h5>
 
-                    {/* --- INFORMAÇÕES EXTRAS DA TAREFA --- */}
                     <div style={{ fontSize: '0.8rem', opacity: 0.8 }}>
                       <div>📅 <b>Início:</b> {formatDateTime(t.start)}</div>
                       {t.end && <div>🏁 <b>Término:</b> {formatDateTime(t.end)}</div>}
