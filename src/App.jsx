@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Capacitor } from '@capacitor/core'
 import { GoogleAuth } from '@codetrix-studio/capacitor-google-auth'
+import { AdMob, BannerAd, InterstitialAd } from '@capgo/capacitor-admob'
 import { LocalNotifications } from '@capacitor/local-notifications'
 
 // IMPORTAÇÃO DA IMAGEM DO GATINHO PRO
@@ -43,6 +44,39 @@ function App() {
   useEffect(() => {
     const init = async () => {
       if (Capacitor.isNativePlatform()) {
+        // --- CONFIGURAÇÃO DA LOJA (IN-APP PURCHASE) ---
+        const { store } = window; // O plugin injeta o objeto store globalmente
+        if (store) {
+          // 1. Registrar o produto (Crie este ID no Google Play Console)
+          store.register({
+            id: 'focus_plus_upgrade',
+            type: store.NON_CONSUMABLE,
+          });
+
+          // 2. O que fazer quando a compra for aprovada
+          store.when('focus_plus_upgrade').approved((transaction) => {
+            // Aqui o Google confirmou o pagamento
+            console.log("Compra aprovada!");
+            transaction.verify(); // Em apps reais, você verificaria o recibo aqui
+          });
+
+          // 3. O que fazer quando a transação for finalizada e verificada
+          store.when('focus_plus_upgrade').verified((receipt) => {
+            receipt.finish();
+            setIsPro(true);
+            localStorage.setItem('focus_pro_status', 'true');
+            alert("Parabéns! Compra realizada com sucesso. Você agora é Focus Plus! 🐾✨");
+          });
+
+          // 4. Tratar erros de pagamento
+          store.error((error) => {
+            console.error("Erro na Loja: " + error.message);
+          });
+
+          // 5. Atualizar o estado da loja
+          store.refresh();
+        }
+
         try {
           await GoogleAuth.initialize({
             clientId: '217686217989-vb0q07jubj16crcjmi1ruknkbfg7cl3m.apps.googleusercontent.com',
@@ -60,6 +94,21 @@ function App() {
           });
         } catch (e) {
           console.warn("Erro na inicialização nativa:", e)
+        }
+
+        // Inicializa AdMob e mostra banner
+        try {
+          await AdMob.start();
+
+          if (!isPro) {
+            const banner = new BannerAd({
+              adUnitId: 'ca-app-pub-6382802129301253/2819339291',
+              position: 'bottom',
+            });
+            await banner.show();
+          }
+        } catch (e) {
+          console.error("Erro ao inicializar AdMob ou mostrar banner:", e);
         }
       }
     }
@@ -90,12 +139,21 @@ function App() {
     document.body.classList.toggle('dark-mode', isDarkMode)
   }, [isDarkMode])
 
-  // --- LÓGICA DE COMPRA (SIMULADA) ---
+  // --- LÓGICA DE COMPRA REAL ---
   const handlePurchase = () => {
-    setIsPro(true);
-    localStorage.setItem('focus_pro_status', 'true');
-    setShowUpgradeModal(false);
-    alert("Parabéns! Você agora é Focus Plus! 🐾✨");
+    if (Capacitor.isNativePlatform()) {
+      const { store } = window;
+      if (store) {
+        setShowUpgradeModal(false);
+        // Inicia o fluxo de pagamento do Google
+        store.order('focus_plus_upgrade');
+      } else {
+        alert("Loja não disponível no momento.");
+      }
+    } else {
+      // Fallback para web (apenas para seus testes no navegador)
+      alert("Compras reais só funcionam no aplicativo Android instalado.");
+    }
   };
 
   // --- LÓGICA DE CONEXÃO GOOGLE (PROTEGIDA) ---
@@ -194,6 +252,26 @@ function App() {
       } catch (e) {
         console.error("Erro na notificação:", e);
       }
+
+      // Prepara e mostra anúncio intersticial após adicionar tarefa
+      try {
+        if (!isPro) {
+          console.log("Carregando anúncio intersticial...");
+          const interstitial = new InterstitialAd({
+            adUnitId: 'ca-app-pub-6382802129301253/8040935877',
+          });
+          await interstitial.load();
+          await interstitial.show();
+        } else {
+          console.log("Usuário é Pro, pulando anúncio.");
+        }
+      } catch (e) {
+        console.error("Erro ao mostrar anúncio intersticial:", e);
+      }
+    } else {
+      // Se não for plataforma nativa, apenas loga a tentativa de notificação/anúncio
+      console.log("Notificação e anúncio intersticial simulados para plataforma web.");
+      console.log(`Tarefa "${newTask.text}" agendada para ${notificationDate.toLocaleString()}`);
     }
 
     setTasks([...tasks, newTask])
